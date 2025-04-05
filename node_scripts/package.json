@@ -1,0 +1,14 @@
+{
+    "name": "liquid-template-processor",
+    "version": "1.0.0",
+    "description": "Processes Liquid templates for security event logs",
+    "main": "liquid_processor.js",
+    "scripts": {
+      "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+      "liquidjs": "^10.9.2"
+    }
+  }

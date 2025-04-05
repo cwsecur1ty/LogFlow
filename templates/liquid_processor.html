@@ -1,0 +1,432 @@
+{% extends "base.html" %} {% block title %}LogFlow - Liquid Template Processor{%
+endblock %} {% block content %}
+<style>
+  .card {
+    background-color: #222222 !important;
+    border-color: #333333 !important;
+  }
+  
+  .card-header {
+    background-color: #1f1f1f !important;
+    border-bottom-color: #333333 !important;
+  }
+
+  .card-body {
+    color: #e1e1e1;
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
+  }
+
+  .form-label, .h5, h5, h2, h3, .form-check-label {
+    color: #ffffff !important;
+  }
+
+  .text-secondary {
+    color: #b0b0b0 !important;
+  }
+
+  .bg-light {
+    background-color: #2a2a2a !important;
+  }
+
+  .modal-content {
+    background-color: #222222;
+    color: #e1e1e1;
+  }
+
+  pre.bg-light {
+    background-color: #2a2a2a !important;
+  }
+
+  code {
+    color: var(--primary-color);
+  }
+
+  .form-control, .form-select {
+    background-color: #2a2a2a;
+    border-color: #333333;
+    color: #e1e1e1;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+  }
+
+  .form-control:focus, .form-select:focus {
+    background-color: #2a2a2a;
+    color: #e1e1e1;
+    box-shadow: none !important;
+  }
+
+  /* File input styling */
+  .form-control[type="file"] {
+    padding: 0.75rem;
+    background-color: #2a2a2a;
+    border: 1px solid #333333;
+    border-radius: 6px;
+    margin: 0;
+  }
+
+  /* File input button override */
+  input[type="file"]::-webkit-file-upload-button {
+    background-color: #333333 !important;
+    color: #e1e1e1 !important;
+    border: none !important;
+    padding: 0.5rem 1rem !important;
+    margin-right: 1rem !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+  }
+
+  input[type="file"]::-webkit-file-upload-button:hover {
+    background-color: #1a1a1a !important;
+  }
+
+  /* For Firefox */
+  input[type="file"]::file-selector-button {
+    background-color: #333333 !important;
+    color: #e1e1e1 !important;
+    border: none !important;
+    padding: 0.5rem 1rem !important;
+    margin-right: 1rem !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+  }
+
+  input[type="file"]::file-selector-button:hover {
+    background-color: #1a1a1a !important;
+  }
+
+  /* Button styles */
+  .btn-outline-secondary {
+    color: #e1e1e1;
+    border-color: #666666;
+  }
+
+  .btn-outline-secondary:hover, 
+  .btn-outline-secondary:focus {
+    background-color: #444444 !important;
+    border-color: #666666 !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+  }
+
+  /* Input group spacing */
+  .input-group {
+    padding: 0;
+  }
+
+  .input-group .btn {
+    margin-left: 0.5rem;
+  }
+
+  /* Alert styles */
+  .alert-info {
+    background-color: #1a2733;
+    border-color: #234258;
+    color: #e1e1e1;
+  }
+
+  p, li {
+    color: #e1e1e1;
+  }
+
+  /* Process result page styling */
+  .output-container {
+    background-color: #2a2a2a !important;
+    border: 1px solid #333333;
+    color: #e1e1e1 !important;
+  }
+
+  .output-container pre {
+    color: #e1e1e1 !important;
+  }
+
+  .result-container {
+    background-color: #2a2a2a !important;
+    border: 1px solid #333333;
+  }
+
+  .formatted-result {
+    background-color: #2a2a2a !important;
+    color: #e1e1e1 !important;
+  }
+
+  /* Make processing result title white */
+  .processing-result {
+    color: #ffffff !important;
+  }
+</style>
+<div class="row">
+  <div class="col-md-10 offset-md-1">
+    <!-- Page header -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+      <h2 class="mb-0">
+        <i class="bi text-primary me-2"></i>
+        Liquid Template Processor
+      </h2>
+      <a href="{{ url_for('example') }}" class="btn btn-sm btn-outline-primary">
+        <i class="bi bi-play-circle me-1"></i>View Example
+      </a>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body p-4">
+        <form
+          action="{{ url_for('process') }}"
+          method="post"
+          enctype="multipart/form-data"
+        >
+          <!-- Template file upload -->
+          <div class="mb-4">
+            <label for="template_file" class="form-label">
+              <i class="bi bi-file-earmark-code me-1"></i>
+              Template File (Liquid):
+            </label>
+            <div class="input-group">
+              <input
+                type="file"
+                class="form-control"
+                id="template_file"
+                name="template_file"
+                accept=".liquid"
+              />
+              <button
+                type="button"
+                class="btn btn-outline-secondary"
+                data-bs-toggle="modal"
+                data-bs-target="#templateHelpModal"
+              >
+                <i class="bi bi-question-circle"></i>
+              </button>
+            </div>
+            <div class="form-text text-secondary">
+              Upload a Liquid template file to process the logs.
+            </div>
+          </div>
+
+          <!-- Log source selection -->
+          <div class="mb-4">
+            <h5 class="mb-3">
+              <i class="bi bi-journal-code me-1"></i>
+              Log Source
+            </h5>
+            <div class="card border">
+              <div class="card-body">
+                <div class="form-check mb-3">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    name="log_source"
+                    id="log_upload"
+                    value="upload"
+                    checked
+                  />
+                  <label class="form-check-label" for="log_upload">
+                    <i class="bi bi-upload me-1"></i>
+                    Upload a log file
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    name="log_source"
+                    id="log_sample"
+                    value="sample"
+                  />
+                  <label class="form-check-label" for="log_sample">
+                    <i class="bi bi-database me-1"></i>
+                    Use a sample log
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- File upload section -->
+          <div id="upload_section" class="mb-4">
+            <label for="log_file" class="form-label">
+              <i class="bi bi-file-earmark-text me-1"></i>
+              Log File (JSON):
+            </label>
+            <input
+              type="file"
+              class="form-control"
+              id="log_file"
+              name="log_file"
+              accept=".json"
+            />
+            <div class="form-text text-secondary">
+              Upload a JSON file containing security event logs.
+            </div>
+          </div>
+
+          <!-- Sample log selection -->
+          <div id="sample_section" class="mb-4" style="display: none">
+            <label for="sample_log" class="form-label">
+              <i class="bi bi-list-ul me-1"></i>
+              Select Sample Log:
+            </label>
+            <div class="input-group">
+              <select class="form-select" id="sample_log" name="sample_log">
+                <option value="">-- Select a sample log --</option>
+                {% for log in logs %}
+                <option value="{{ log.id }}">
+                  {{ log.filename }} ({{ log.type }})
+                </option>
+                {% endfor %}
+              </select>
+              <a
+                href="{{ url_for('log_list') }}"
+                class="btn btn-outline-secondary"
+              >
+                <i class="bi bi-gear me-1"></i>Manage
+              </a>
+            </div>
+            <div class="form-text text-secondary">
+              Select a previously created or uploaded log file.
+            </div>
+          </div>
+
+          <!-- Submit button -->
+          <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+            <button type="submit" class="btn btn-primary px-4">
+              <i class="bi bi-play-fill me-1"></i>Process
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Information card -->
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white">
+        <h3 class="mb-0">
+          <i class="bi bi-info-circle text-primary me-2"></i>
+          About Liquid Template Processing
+        </h3>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <p>
+              The Liquid Template Processor transforms JSON log data into
+              structured reports using Liquid templates.
+            </p>
+
+            <div class="mb-4">
+              <h5 class="border-bottom pb-2">Expected Format</h5>
+              <ul class="mb-0">
+                <li>
+                  JSON log files with logs in a <code>logs.log</code> array
+                </li>
+                <li>
+                  Liquid templates that reference fields in the log entries
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="mb-4">
+              <h5 class="border-bottom pb-2">How It Works</h5>
+              <p>
+                The processor parses the Liquid template and applies it to your
+                log data, generating a formatted report that can be used for
+                investigations or documentation.
+              </p>
+            </div>
+
+            <div class="alert alert-info">
+              <i class="bi bi-lightbulb me-2"></i>
+              <strong>Tip:</strong> Check out the example to see how it works.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Template Help Modal -->
+<div
+  class="modal fade"
+  id="templateHelpModal"
+  tabindex="-1"
+  aria-labelledby="templateHelpModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="templateHelpModalLabel">
+          Liquid Template Help
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <h6>Basic Template Structure</h6>
+        <pre
+          class="bg-light p-3 rounded"
+        ><code>{% raw %}{% assign log_entries = logs.log -%}
+
+{% if log_entries.size == 1 -%}
+  <!-- Single log entry processing -->
+  As part of the investigation, we observed that...
+  * Field: `{{ log_entries[0].field_name }}`
+{% else -%}
+  <!-- Multiple log entries processing -->
+  {% for log_entry in log_entries -%}
+    * Entry: `{{ log_entry.field_name }}`
+  {% endfor -%}
+{% endif %}{% endraw %}</code></pre>
+
+        <h6 class="mt-4">Common Fields</h6>
+        <ul>
+          <li>
+            <code>log_entries[0].actor.type</code> - Actor type (system, user)
+          </li>
+          <li><code>log_entries[0].when</code> - Timestamp</li>
+          <li><code>log_entries[0].action.type</code> - Action type</li>
+          <li><code>log_entries[0].newValueJson.type</code> - Record type</li>
+        </ul>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const logUpload = document.getElementById("log_upload");
+    const logSample = document.getElementById("log_sample");
+    const uploadSection = document.getElementById("upload_section");
+    const sampleSection = document.getElementById("sample_section");
+
+    // Handle log source selection
+    logUpload.addEventListener("change", function () {
+      if (this.checked) {
+        uploadSection.style.display = "block";
+        sampleSection.style.display = "none";
+      }
+    });
+
+    logSample.addEventListener("change", function () {
+      if (this.checked) {
+        uploadSection.style.display = "none";
+        sampleSection.style.display = "block";
+      }
+    });
+  });
+</script>
+{% endblock %}

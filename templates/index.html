@@ -1,0 +1,163 @@
+{% extends "base.html" %} {% block title %}Security Event Template Processor{%
+endblock %} {% block content %}
+<div class="row">
+  <div class="col-md-8 offset-md-2">
+    <div class="card">
+      <div class="card-header">
+        <h2>Process Logs</h2>
+        <p>
+          Use a Liquid language template to interpret log data in JSON format,
+          creating a readable output.
+        </p>
+      </div>
+      <div class="card-body">
+        <form
+          action="{{ url_for('process') }}"
+          method="post"
+          enctype="multipart/form-data"
+        >
+          <div class="mb-3">
+            <label for="template_file" class="form-label"
+              >Template File (Liquid):</label
+            >
+            <input
+              type="file"
+              class="form-control"
+              id="template_file"
+              name="template_file"
+              accept=".liquid"
+            />
+            <div class="form-text">
+              Upload a '.liquid' template file to process the logs.
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <h5>Log Source</h5>
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="radio"
+                name="log_source"
+                id="log_upload"
+                value="upload"
+                checked
+              />
+              <label class="form-check-label" for="log_upload">
+                Upload a log file
+              </label>
+            </div>
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="radio"
+                name="log_source"
+                id="log_sample"
+                value="sample"
+              />
+              <label class="form-check-label" for="log_sample">
+                Use a sample log
+              </label>
+            </div>
+          </div>
+
+          <div id="upload_section" class="mb-3">
+            <label for="log_file" class="form-label">Log File (JSON):</label>
+            <input
+              type="file"
+              class="form-control"
+              id="log_file"
+              name="log_file"
+              accept=".json"
+            />
+            <div class="form-text">
+              Upload a '.JSON' file containing security event logs.
+            </div>
+          </div>
+
+          <div id="sample_section" class="mb-3" style="display: none">
+            <label for="sample_log" class="form-label"
+              >Select Sample Log:</label
+            >
+            <select class="form-select" id="sample_log" name="sample_log">
+              <option value="">-- Select a sample log --</option>
+              {% for log in logs %}
+              <option value="{{ log.id }}">
+                {{ log.filename }} ({{ log.type }})
+              </option>
+              {% endfor %}
+            </select>
+            <div class="mt-2">
+              <a
+                href="{{ url_for('log_list') }}"
+                class="btn btn-sm btn-secondary"
+                >Manage Sample Logs</a
+              >
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary">Process</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card mt-4">
+      <div class="card-header">
+        <h3>About This Tool</h3>
+      </div>
+      <div class="card-body">
+        <p>
+          This tool processes JSON log files using Liquid based templates and
+          outputs the end result (typically in md).
+        </p>
+
+        <h4>How to Use:</h4>
+        <p>The application expects:</p>
+        <ul>
+          <li>JSON log files with logs in a <code>logs.log</code> array</li>
+          <li>
+            Liquid templates that reference fields in the log entries (this is
+            necessary to generate any useful output)
+          </li>
+        </ul>
+
+        <h4>How It Works</h4>
+        <p>
+          The processor uses a Node.js bridge to parse the Liquid template and
+          apply it to your log data, generating a formatted result (markdown).
+        </p>
+
+        <p>
+          <a href="{{ url_for('example') }}" class="btn btn-secondary"
+            >View Example</a
+          >
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const logUpload = document.getElementById("log_upload");
+    const logSample = document.getElementById("log_sample");
+    const uploadSection = document.getElementById("upload_section");
+    const sampleSection = document.getElementById("sample_section");
+
+    // Handle log source selection
+    logUpload.addEventListener("change", function () {
+      if (this.checked) {
+        uploadSection.style.display = "block";
+        sampleSection.style.display = "none";
+      }
+    });
+
+    logSample.addEventListener("change", function () {
+      if (this.checked) {
+        uploadSection.style.display = "none";
+        sampleSection.style.display = "block";
+      }
+    });
+  });
+</script>
+{% endblock %}

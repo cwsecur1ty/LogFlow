@@ -1,0 +1,188 @@
+{% extends "base.html" %} {% block title %}Sample Logs{% endblock %} {% block
+content %}
+<style>
+  .card {
+    background-color: #222222 !important;
+    border-color: #333333 !important;
+  }
+  
+  .card-header {
+    background-color: #1f1f1f !important;
+    border-bottom-color: #333333 !important;
+  }
+
+  .card-body {
+    color: #e1e1e1;
+  }
+
+  h2 {
+    color: #ffffff !important;
+  }
+
+  /* Table styles */
+  .table {
+    color: #e1e1e1 !important;
+    background-color: #222222;
+  }
+
+  .table th {
+    color: #ffffff;
+    border-bottom-color: #333333;
+    background-color: #1f1f1f;
+  }
+
+  .table td {
+    border-color: #333333;
+    background-color: #222222;
+    color: #e1e1e1 !important;
+  }
+
+  .table tbody tr {
+    background-color: #222222 !important;
+  }
+
+  .table-striped tbody tr:nth-of-type(odd) {
+    background-color: #2a2a2a !important;
+  }
+
+  .table-striped tbody tr td {
+    color: #e1e1e1 !important;
+  }
+
+  .table-responsive {
+    background-color: #222222;
+  }
+
+  /* Make sure table text is visible */
+  .text-center {
+    color: #e1e1e1;
+  }
+
+  /* Button styles in table */
+  .btn-outline-primary, .btn-outline-danger {
+    color: #e1e1e1;
+  }
+
+  /* Modal styles */
+  .modal-content {
+    background-color: #222222;
+    border-color: #333333;
+  }
+
+  .modal-header {
+    border-bottom-color: #333333;
+  }
+
+  .modal-footer {
+    border-top-color: #333333;
+  }
+
+  .modal-title {
+    color: #ffffff;
+  }
+
+  .modal-body {
+    color: #e1e1e1;
+  }
+</style>
+<div class="row">
+  <div class="col-md-10 offset-md-1">
+    <div class="card">
+      <div
+        class="card-header d-flex justify-content-between align-items-center"
+      >
+        <h2>Sample Logs</h2>
+        <a href="{{ url_for('create_log') }}" class="btn btn-primary"
+          >Create New Log</a
+        >
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>Filename</th>
+                <th>Type</th>
+                <th>Entries</th>
+                <th>Created</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% if logs %} {% for log in logs %}
+              <tr>
+                <td>{{ log.filename }}</td>
+                <td>{{ log.type }}</td>
+                <td>{{ log.entry_count }}</td>
+                <td>{{ log.created }}</td>
+                <td>
+                  <a
+                    href="{{ url_for('edit_log', log_id=log.id) }}"
+                    class="btn btn-sm btn-outline-primary"
+                    >Edit</a
+                  >
+                  <button
+                    class="btn btn-sm btn-outline-danger"
+                    onclick="confirmDelete('{{ log.id }}')"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+              {% endfor %} {% else %}
+              <tr>
+                <td colspan="5" class="text-center">No sample logs found</td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div
+  class="modal fade"
+  id="deleteModal"
+  tabindex="-1"
+  aria-labelledby="deleteModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to delete this sample log?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Cancel
+        </button>
+        <form id="deleteForm" method="post" action="">
+          <button type="submit" class="btn btn-danger">Delete</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function confirmDelete(logId) {
+    const deleteForm = document.getElementById("deleteForm");
+    deleteForm.action = "{{ url_for('delete_log', log_id='') }}" + logId;
+
+    const modal = new bootstrap.Modal(document.getElementById("deleteModal"));
+    modal.show();
+  }
+</script>
+{% endblock %}

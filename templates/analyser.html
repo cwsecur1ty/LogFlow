@@ -1,0 +1,122 @@
+{% extends "base.html" %} {% block title %}LogFlow - Log Analyser{% endblock %}
+{% block content %}
+<div class="row">
+  <div class="col-md-10 offset-md-1">
+    <div class="card">
+      <div class="card-header">
+        <h2>Log Analyser</h2>
+      </div>
+      <div class="card-body">
+        <form action="{{ url_for('analyze_json') }}" method="post">
+          <div class="mb-3">
+            <label for="json_data" class="form-label"
+              >Paste JSON Log Data:</label
+            >
+            <div
+              id="editor"
+              style="height: 400px; width: 100%; border: 1px solid #ccc"
+            ></div>
+            <input type="hidden" id="json_data" name="json_data" />
+            <div class="form-text">Paste your JSON log data for analysis.</div>
+          </div>
+
+          <div class="mb-3">
+            <button
+              type="button"
+              class="btn btn-secondary me-2"
+              id="format_json"
+            >
+              Format JSON
+            </button>
+            <button
+              type="button"
+              class="btn btn-secondary me-2"
+              id="clear_json"
+            >
+              Clear
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              onclick="submitForm()"
+            >
+              Analyze
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="card mt-4">
+      <div class="card-header">
+        <h3>About Log Analyser</h3>
+      </div>
+      <div class="card-body">
+        <p>
+          The Log Analyser helps you understand the structure of your JSON log
+          files by:
+        </p>
+
+        <ul>
+          <li>Identifying the log format and structure</li>
+          <li>Extracting all available fields and their types</li>
+          <li>Showing sample values for important fields</li>
+          <li>Providing insights for template creation</li>
+        </ul>
+
+        <p>Paste your JSON log data above to get started.</p>
+
+        <div class="alert alert-info">
+          <strong>Tip:</strong> For best results, paste complete log entries
+          including the <code>logs.log</code> structure.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Load Ace editor -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
+<script>
+  // Initialize editor
+  const editor = ace.edit("editor");
+  editor.setTheme("ace/theme/monokai");
+  editor.session.setMode("ace/mode/json");
+  editor.setValue(
+    '{\n  "logs": {\n    "log": [\n      {\n        // Paste your log entry here\n      }\n    ]\n  }\n}'
+  );
+
+  // Submit form handler
+  function submitForm() {
+    try {
+      // Parse JSON to validate
+      const jsonData = editor.getValue();
+      JSON.parse(jsonData);
+
+      // Set form value and submit
+      document.getElementById("json_data").value = jsonData;
+      document.querySelector("form").submit();
+    } catch (e) {
+      alert("Invalid JSON: " + e.message);
+    }
+  }
+
+  // Format JSON handler
+  document.getElementById("format_json").addEventListener("click", function () {
+    try {
+      const jsonData = editor.getValue();
+      const parsed = JSON.parse(jsonData);
+      editor.setValue(JSON.stringify(parsed, null, 2));
+    } catch (e) {
+      alert("Invalid JSON: " + e.message);
+    }
+  });
+
+  // Clear JSON handler
+  document.getElementById("clear_json").addEventListener("click", function () {
+    editor.setValue(
+      '{\n  "logs": {\n    "log": [\n      {\n        // Paste your log entry here\n      }\n    ]\n  }\n}'
+    );
+  });
+</script>
+{% endblock %}

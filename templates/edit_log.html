@@ -1,0 +1,67 @@
+{% extends "base.html" %} {% block title %}Edit Sample Log{% endblock %} {%
+block content %}
+<div class="row">
+  <div class="col-md-10 offset-md-1">
+    <div class="card">
+      <div
+        class="card-header d-flex justify-content-between align-items-center"
+      >
+        <h2>Edit Sample Log Files</h2>
+        <a href="{{ url_for('log_list') }}" class="btn btn-secondary"
+          >Back to Logs</a
+        >
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <strong>Log ID:</strong> {{ log_id }}<br />
+          <strong>Filename:</strong> {{ filename }}<br />
+          <strong>Type:</strong> {{ log_type }}
+        </div>
+
+        <form action="{{ url_for('edit_log', log_id=log_id) }}" method="post">
+          <div class="mb-3">
+            <label for="log_data" class="form-label">Log Data (JSON)</label>
+            <div
+              id="editor"
+              style="height: 400px; width: 100%; border: 1px solid #ccc"
+            ></div>
+            <input type="hidden" id="log_data" name="log_data" />
+            <div class="form-text">
+              Edit the log data as a JSON array. Each object in the array
+              represents one log entry.
+            </div>
+          </div>
+
+          <button type="button" class="btn btn-primary" onclick="submitForm()">
+            Update Log
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Load Ace editor -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
+<script>
+  // Initialize editor
+  const editor = ace.edit("editor");
+  editor.setTheme("ace/theme/monokai");
+  editor.session.setMode("ace/mode/json");
+  editor.setValue({{ log_data|tojson }});
+
+  function submitForm() {
+      try {
+          // Parse JSON to validate
+          const jsonData = editor.getValue();
+          JSON.parse(jsonData);
+
+          // Set form value and submit
+          document.getElementById('log_data').value = jsonData;
+          document.querySelector('form').submit();
+      } catch (e) {
+          alert('Invalid JSON: ' + e.message);
+      }
+  }
+</script>
+{% endblock %}
