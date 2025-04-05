@@ -1,6 +1,6 @@
 # LogFlow
 
-![LogFlow Logo](images/logflow_logo.png)
+<img src="images/logflow_logo.png" alt="LogFlow Logo" width="200" height="200"/>
 
 LogFlow is a flask & web-based toolkit for security professionals to process, analyse and manage logs/json.
 
