@@ -1,6 +1,6 @@
 # LogFlow
 
-![LogFlow Logo](https://via.placeholder.com/150x50?text=LogFlow)
+![LogFlow Logo](images/logflow_logo.png)
 
 LogFlow is a flask & web-based toolkit for security professionals to process, analyse and manage logs/json.
 
@@ -58,4 +58,4 @@ logflow/
 ```
 ### License
 
-This project is licensed under the MIT License - see (LICENSE)[] for details.
+This project is licensed under the MIT License - see (LICENSE)[https://github.com/cwsecur1ty/LogFlow/blob/main/LICENSE] for details.
