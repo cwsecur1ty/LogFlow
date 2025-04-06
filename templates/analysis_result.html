@@ -1,12 +1,91 @@
 {% extends "base.html" %} {% block title %}LogFlow - Analysis Results{% endblock
 %} {% block content %}
+<style>
+  .card {
+    background-color: #222222 !important;
+    border-color: #333333 !important;
+  }
+  
+  .card-header {
+    background-color: #1f1f1f !important;
+    border-bottom-color: #333333 !important;
+  }
+
+  .card-body {
+    color: #e1e1e1;
+  }
+
+  h2, h3, h4 {
+    color: #ffffff !important;
+  }
+
+  /* Table styles */
+  .table {
+    color: #e1e1e1 !important;
+    background-color: #222222;
+  }
+
+  .table th {
+    color: #ffffff;
+    border-bottom-color: #333333;
+    background-color: #1f1f1f;
+  }
+
+  .table td {
+    border-color: #333333;
+    background-color: #222222;
+    color: #e1e1e1 !important;
+  }
+
+  .table-striped tbody tr:nth-of-type(odd) {
+    background-color: #2a2a2a !important;
+  }
+
+  /* Tab styling */
+  .nav-tabs {
+    border-bottom-color: #333333;
+  }
+
+  .nav-tabs .nav-link {
+    color: #e1e1e1;
+  }
+
+  .nav-tabs .nav-link.active {
+    background-color: #2a2a2a;
+    border-color: #333333;
+    color: #ffffff;
+  }
+
+  .tab-content {
+    background-color: #2a2a2a;
+    border-color: #333333;
+  }
+
+  /* Code and pre styling */
+  pre, code {
+    background-color: #1a1a1a;
+    color: #e1e1e1;
+  }
+
+  .bg-light {
+    background-color: #1a1a1a !important;
+  }
+
+  /* Alert styling */
+  .alert-info {
+    background-color: #1a2733;
+    border-color: #234258;
+    color: #e1e1e1;
+  }
+</style>
+
 <div class="row">
   <div class="col-md-10 offset-md-1">
     <div class="card">
       <div
         class="card-header d-flex justify-content-between align-items-center"
       >
-        <h2>Log Analysis Results</h2>
+        <h2 class="text-white mb-0">Log Analysis Results</h2>
         <a href="{{ url_for('log_analyser') }}" class="btn btn-secondary"
           >Back to Analyser</a
         >
@@ -67,6 +146,34 @@
               aria-selected="false"
             >
               Raw JSON
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button
+              class="nav-link"
+              id="statistics-tab"
+              data-bs-toggle="tab"
+              data-bs-target="#statistics"
+              type="button"
+              role="tab"
+              aria-controls="statistics"
+              aria-selected="false"
+            >
+              Statistics
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button
+              class="nav-link"
+              id="patterns-tab"
+              data-bs-toggle="tab"
+              data-bs-target="#patterns"
+              type="button"
+              role="tab"
+              aria-controls="patterns"
+              aria-selected="false"
+            >
+              Patterns
             </button>
           </li>
         </ul>
@@ -202,6 +309,172 @@
             <div class="bg-light p-3 rounded">
               <pre><code>{{ raw_json }}</code></pre>
             </div>
+          </div>
+
+          <!-- Statistics Tab -->
+          <div
+            class="tab-pane fade"
+            id="statistics"
+            role="tabpanel"
+            aria-labelledby="statistics-tab"
+          >
+            <h4>Field Value Distribution</h4>
+            {% if analysis.statistics %}
+              {% for field_path, stats in analysis.statistics.items() %}
+                <div class="card mb-4">
+                  <div class="card-header">
+                    <h5 class="mb-0">
+                      <code>{{ field_path }}</code>
+                      <small class="text-muted">({{ stats.type }})</small>
+                    </h5>
+                  </div>
+                  <div class="card-body">
+                    <div class="row">
+                      <div class="col-md-6">
+                        <h6>Value Distribution</h6>
+                        <div class="table-responsive">
+                          <table class="table table-sm">
+                            <thead>
+                              <tr>
+                                <th>Value</th>
+                                <th>Count</th>
+                                <th>Frequency</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {% for value, count in stats.most_common %}
+                                <tr>
+                                  <td><code>{{ value }}</code></td>
+                                  <td>{{ count }}</td>
+                                  <td>{{ "%.1f"|format(stats.frequency_distribution[value]) }}%</td>
+                                </tr>
+                              {% endfor %}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <h6>Summary</h6>
+                        <ul class="list-unstyled">
+                          <li>Total occurrences: {{ stats.total_occurrences }}</li>
+                          <li>Unique values: {{ stats.unique_values }}</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            {% else %}
+              <div class="alert alert-info">
+                No statistical data available for this log.
+              </div>
+            {% endif %}
+          </div>
+
+          <!-- Patterns Tab -->
+          <div
+            class="tab-pane fade"
+            id="patterns"
+            role="tabpanel"
+            aria-labelledby="patterns-tab"
+          >
+            {% if analysis.patterns %}
+              <!-- Temporal Patterns -->
+              {% if analysis.patterns.temporal_patterns %}
+                <div class="card mb-4">
+                  <div class="card-header">
+                    <h5 class="mb-0 text-white">Temporal Patterns</h5>
+                  </div>
+                  <div class="card-body">
+                    <div class="table-responsive">
+                      <table class="table table-sm">
+                        <thead>
+                          <tr>
+                            <th>Hour</th>
+                            <th>Event Count</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {% for hour, count in analysis.patterns.temporal_patterns.items()|sort %}
+                            <tr>
+                              <td>{{ "%02d"|format(hour|int) }}:00</td>
+                              <td>{{ count }}</td>
+                            </tr>
+                          {% endfor %}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              {% endif %}
+
+              <!-- Field Correlations -->
+              {% if analysis.patterns.field_correlations %}
+                <div class="card mb-4">
+                  <div class="card-header">
+                    <h5 class="mb-0 text-white">Field Correlations</h5>
+                  </div>
+                  <div class="card-body">
+                    {% for correlation, data in analysis.patterns.field_correlations.items() %}
+                      {% if data.count > 1 %}
+                        <div class="mb-4">
+                          <h6><code>{{ correlation }}</code></h6>
+                          <p>Occurred {{ data.count }} times</p>
+                          <div class="alert alert-info">
+                            <strong>Examples:</strong>
+                            <ul class="mb-0">
+                              {% for example in data.examples %}
+                                <li>When value is <code>{{ example.value1 }}</code>, found <code>{{ example.value2 }}</code></li>
+                              {% endfor %}
+                            </ul>
+                          </div>
+                        </div>
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+                </div>
+              {% endif %}
+
+              <!-- Sequence Patterns -->
+              {% if analysis.patterns.sequence_patterns %}
+                <div class="card mb-4">
+                  <div class="card-header">
+                    <h5 class="mb-0 text-white">Common Sequences</h5>
+                  </div>
+                  <div class="card-body">
+                    {% for pattern in analysis.patterns.sequence_patterns %}
+                      <div class="mb-4">
+                        <h6>Field: <code>{{ pattern.field }}</code></h6>
+                        <div class="table-responsive">
+                          <table class="table table-sm">
+                            <thead>
+                              <tr>
+                                <th>Sequence</th>
+                                <th>Length</th>
+                                <th>Occurrences</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {% for seq in pattern.sequences %}
+                                <tr>
+                                  <td><code>{{ seq.sequence|join(" → ") }}</code></td>
+                                  <td>{{ seq.length }}</td>
+                                  <td>{{ seq.count }}</td>
+                                </tr>
+                              {% endfor %}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    {% endfor %}
+                  </div>
+                </div>
+              {% endif %}
+            {% else %}
+              <div class="alert alert-info">
+                No patterns detected in this log.
+              </div>
+            {% endif %}
           </div>
         </div>
       </div>

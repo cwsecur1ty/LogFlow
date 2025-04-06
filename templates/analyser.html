@@ -4,10 +4,10 @@
   <div class="col-md-10 offset-md-1">
     <div class="card">
       <div class="card-header">
-        <h2>Log Analyser</h2>
+        <h2 class="text-white">Log Analyser</h2>
       </div>
       <div class="card-body">
-        <form action="{{ url_for('analyze_json') }}" method="post">
+        <form action="{{ url_for('analyze_json') }}" method="post" enctype="multipart/form-data">
           <div class="mb-3">
             <label for="json_data" class="form-label"
               >Paste JSON Log Data:</label
@@ -18,6 +18,27 @@
             ></div>
             <input type="hidden" id="json_data" name="json_data" />
             <div class="form-text">Paste your JSON log data for analysis.</div>
+          </div>
+
+          <div class="mb-3">
+            <label for="log_file" class="form-label">Or Upload JSON Log File:</label>
+            <div class="input-group">
+              <input
+                type="file"
+                class="form-control"
+                id="log_file"
+                name="log_file"
+                accept=".json"
+              />
+              <button
+                type="button"
+                class="btn btn-warning"
+                onclick="uploadAndAnalyse()"
+              >
+                Upload Log File
+              </button>
+            </div>
+            <div class="form-text">Upload a JSON file containing log data.</div>
           </div>
 
           <div class="mb-3">
@@ -40,7 +61,7 @@
               class="btn btn-primary"
               onclick="submitForm()"
             >
-              Analyze
+              Analyse
             </button>
           </div>
         </form>
@@ -49,26 +70,71 @@
 
     <div class="card mt-4">
       <div class="card-header">
-        <h3>About Log Analyser</h3>
+        <h3 class="text-white">About Log Analyser</h3>
       </div>
       <div class="card-body">
-        <p>
-          The Log Analyser helps you understand the structure of your JSON log
-          files by:
-        </p>
+        <div class="row">
+          <div class="col-md-6">
+            <p class="text-white">
+              The Log Analyser helps you analyze and understand your security event logs.
+            </p>
 
-        <ul>
-          <li>Identifying the log format and structure</li>
-          <li>Extracting all available fields and their types</li>
-          <li>Showing sample values for important fields</li>
-          <li>Providing insights for template creation</li>
-        </ul>
+            <div class="mb-4">
+              <h5 class="border-bottom pb-2 text-white">Expected Format</h5>
+              <ul class="mb-0 text-white">
+                <li>
+                  JSON log files with logs in a <code>logs.log</code> array
+                </li>
+                <li>
+                  Each log entry should contain relevant security event data
+                </li>
+              </ul>
+            </div>
+          </div>
 
-        <p>Paste your JSON log data above to get started.</p>
+          <div class="col-md-6">
+            <div class="mb-4">
+              <h5 class="border-bottom pb-2 text-white">How It Works</h5>
+              <p class="text-white">
+                The analyser processes your log data and provides insights into
+                security events, helping you identify patterns and potential
+                security issues.
+              </p>
+            </div>
 
-        <div class="alert alert-info">
-          <strong>Tip:</strong> For best results, paste complete log entries
-          including the <code>logs.log</code> structure.
+            <div class="alert alert-info">
+              <i class="bi bi-lightbulb me-2"></i>
+              <strong>Tip:</strong> Upload a log file or select a sample to get started.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mt-4">
+      <div class="card-header">
+        <h3 class="text-white">Log Analysis Results</h3>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-dark">
+            <thead>
+              <tr>
+                <th>Field</th>
+                <th>Type</th>
+                <th>Sample Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for field in fields %}
+              <tr>
+                <td><code>{{ field.path }}</code></td>
+                <td>{{ field.type }}</td>
+                <td><code>{{ field.sample }}</code></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -85,6 +151,34 @@
   editor.setValue(
     '{\n  "logs": {\n    "log": [\n      {\n        // Paste your log entry here\n      }\n    ]\n  }\n}'
   );
+
+  // Function to handle file upload and analysis
+  function uploadAndAnalyse() {
+    const fileInput = document.getElementById('log_file');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+      alert('Please select a file to upload');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const jsonData = e.target.result;
+        // Validate JSON
+        JSON.parse(jsonData);
+        // Set editor value
+        editor.setValue(jsonData);
+        // Submit form
+        document.getElementById("json_data").value = jsonData;
+        document.querySelector("form").submit();
+      } catch (e) {
+        alert('Invalid JSON file: ' + e.message);
+      }
+    };
+    reader.readAsText(file);
+  }
 
   // Submit form handler
   function submitForm() {

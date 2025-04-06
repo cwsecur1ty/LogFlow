@@ -142,7 +142,9 @@ def analyze_log_structure(log_data):
         'summary': {},
         'structure': {},
         'fields': [],
-        'samples': {}
+        'samples': {},
+        'statistics': {},
+        'patterns': {}
     }
     
     # Check if it follows the logs.log pattern
@@ -161,14 +163,18 @@ def analyze_log_structure(log_data):
                 source_fields = extract_fields(first_entry['_source'])
                 analysis['fields'] = source_fields
                 
-                # Get samples of important fields
+                # Get samples and statistics of important fields
                 analysis['samples'] = extract_samples(log_entries, source_fields, '_source')
+                analysis['statistics'] = calculate_field_statistics(log_entries, source_fields, '_source')
+                analysis['patterns'] = identify_patterns(log_entries, source_fields, '_source')
             else:
                 analysis['summary']['has_source'] = False
                 analysis['fields'] = extract_fields(first_entry)
                 
-                # Get samples of important fields
+                # Get samples and statistics of important fields
                 analysis['samples'] = extract_samples(log_entries, analysis['fields'])
+                analysis['statistics'] = calculate_field_statistics(log_entries, analysis['fields'])
+                analysis['patterns'] = identify_patterns(log_entries, analysis['fields'])
     else:
         # Handle other JSON structures
         analysis['summary']['format'] = 'Non-standard JSON structure'
@@ -186,14 +192,14 @@ def extract_fields(data, prefix=''):
             
             if isinstance(value, dict):
                 fields.append({
-                    'name': full_key,
+                    'path': full_key,
                     'type': 'object',
                     'sample': str(value)[:50] + ('...' if len(str(value)) > 50 else '')
                 })
                 fields.extend(extract_fields(value, full_key))
             elif isinstance(value, list):
                 fields.append({
-                    'name': full_key,
+                    'path': full_key,
                     'type': 'array',
                     'sample': str(value)[:50] + ('...' if len(str(value)) > 50 else '')
                 })
@@ -202,7 +208,7 @@ def extract_fields(data, prefix=''):
                     fields.extend(extract_fields(value[0], f"{full_key}[0]"))
             else:
                 fields.append({
-                    'name': full_key,
+                    'path': full_key,
                     'type': type(value).__name__,
                     'sample': str(value)[:50] + ('...' if len(str(value)) > 50 else '')
                 })
@@ -215,8 +221,8 @@ def extract_samples(log_entries, fields, source_field=None):
     important_fields = ['type', 'id', 'action', 'actor', 'timestamp', '@timestamp', 'when']
     
     for field in fields:
-        field_name = field['name']
-        base_name = field_name.split('.')[-1]
+        field_path = field['path']
+        base_name = field_path.split('.')[-1]
         
         if any(key in base_name.lower() for key in important_fields):
             values = set()
@@ -227,7 +233,7 @@ def extract_samples(log_entries, fields, source_field=None):
                     entry = entry[source_field]
                 
                 # Navigate to the field using the path
-                value = get_nested_value(entry, field_name)
+                value = get_nested_value(entry, field_path.split('.'))
                 
                 if value is not None:
                     # For objects/arrays, convert to string representation
@@ -241,30 +247,170 @@ def extract_samples(log_entries, fields, source_field=None):
                         break
             
             if values:
-                samples[field_name] = list(values)
+                samples[field_path] = list(values)
     
     return samples
 
-def get_nested_value(obj, path):
-    """Get a value from a nested object using a dot notation path."""
-    parts = path.split('.')
+def calculate_field_statistics(log_entries, fields, source_prefix=''):
+    """Calculate statistical insights for log fields."""
+    stats = {}
     
-    for part in parts:
-        # Handle array indexing
-        if '[' in part and ']' in part:
-            array_name = part.split('[')[0]
-            index = int(part.split('[')[1].split(']')[0])
+    for entry in log_entries:
+        data = entry.get('_source', entry) if source_prefix else entry
+        
+        for field in fields:
+            field_path = field['path']
+            field_type = field['type']
             
-            if array_name in obj and isinstance(obj[array_name], list) and len(obj[array_name]) > index:
-                obj = obj[array_name][index]
-            else:
-                return None
-        elif part in obj:
-            obj = obj[part]
+            # Initialize stats structure if not exists
+            if field_path not in stats:
+                stats[field_path] = {
+                    'value_counts': {},
+                    'total_occurrences': 0,
+                    'unique_values': 0,
+                    'type': field_type
+                }
+            
+            # Extract the field value using the path
+            value = get_nested_value(data, field_path.split('.'))
+            
+            if value is not None:
+                # Count frequency of values
+                str_value = str(value)
+                stats[field_path]['value_counts'][str_value] = stats[field_path]['value_counts'].get(str_value, 0) + 1
+                stats[field_path]['total_occurrences'] += 1
+    
+    # Calculate additional statistics
+    for field_path in stats:
+        value_counts = stats[field_path]['value_counts']
+        stats[field_path]['unique_values'] = len(value_counts)
+        
+        # Get top 5 most common values
+        sorted_values = sorted(value_counts.items(), key=lambda x: x[1], reverse=True)
+        stats[field_path]['most_common'] = sorted_values[:5]
+        
+        # Calculate frequency distribution
+        total = stats[field_path]['total_occurrences']
+        stats[field_path]['frequency_distribution'] = {
+            value: (count / total) * 100 
+            for value, count in sorted_values[:5]
+        }
+    
+    return stats
+
+def identify_patterns(log_entries, fields, source_prefix=''):
+    """Identify common patterns and correlations in log entries."""
+    patterns = {
+        'temporal_patterns': {},
+        'field_correlations': {},
+        'sequence_patterns': []
+    }
+    
+    # Track field value sequences
+    field_sequences = {}
+    
+    for i, entry in enumerate(log_entries):
+        data = entry.get('_source', entry) if source_prefix else entry
+        
+        # Analyze temporal patterns if timestamp field exists
+        timestamp = get_nested_value(data, ['when']) or get_nested_value(data, ['timestamp'])
+        if timestamp:
+            hour = extract_hour_from_timestamp(timestamp)
+            patterns['temporal_patterns'][hour] = patterns['temporal_patterns'].get(hour, 0) + 1
+        
+        # Track field value sequences for pattern detection
+        for field in fields:
+            field_path = field['path']
+            value = get_nested_value(data, field_path.split('.'))
+            
+            if value is not None:
+                if field_path not in field_sequences:
+                    field_sequences[field_path] = []
+                field_sequences[field_path].append(str(value))
+        
+        # Analyze field correlations
+        if i > 0:
+            prev_data = log_entries[i-1].get('_source', log_entries[i-1]) if source_prefix else log_entries[i-1]
+            for field1 in fields:
+                for field2 in fields:
+                    if field1['path'] != field2['path']:
+                        value1 = get_nested_value(data, field1['path'].split('.'))
+                        value2 = get_nested_value(data, field2['path'].split('.'))
+                        prev_value1 = get_nested_value(prev_data, field1['path'].split('.'))
+                        
+                        if value1 == prev_value1 and value2 is not None:
+                            key = f"{field1['path']} → {field2['path']}"
+                            if key not in patterns['field_correlations']:
+                                patterns['field_correlations'][key] = {
+                                    'count': 0,
+                                    'examples': []
+                                }
+                            if len(patterns['field_correlations'][key]['examples']) < 3:
+                                patterns['field_correlations'][key]['examples'].append({
+                                    'value1': value1,
+                                    'value2': value2
+                                })
+                            patterns['field_correlations'][key]['count'] += 1
+    
+    # Find common sequences in field values
+    for field_path, values in field_sequences.items():
+        if len(values) >= 3:
+            common_sequences = find_common_sequences(values)
+            if common_sequences:
+                patterns['sequence_patterns'].append({
+                    'field': field_path,
+                    'sequences': common_sequences[:3]  # Top 3 most common sequences
+                })
+    
+    return patterns
+
+def get_nested_value(obj, path):
+    """Safely get nested value from dictionary using path list."""
+    for key in path:
+        if isinstance(obj, dict):
+            obj = obj.get(key)
         else:
             return None
-    
     return obj
+
+def extract_hour_from_timestamp(timestamp):
+    """Extract hour from timestamp string."""
+    try:
+        # Add different timestamp format parsing as needed
+        if isinstance(timestamp, str):
+            if 'T' in timestamp:
+                return int(timestamp.split('T')[1].split(':')[0])
+            return int(timestamp.split(' ')[1].split(':')[0])
+    except:
+        return None
+
+def find_common_sequences(values, min_length=2, max_sequences=3):
+    """Find common sequences in a list of values."""
+    sequences = {}
+    
+    for i in range(len(values) - min_length + 1):
+        for j in range(i + min_length, min(i + 5, len(values) + 1)):
+            sequence = tuple(values[i:j])
+            if sequence not in sequences:
+                sequences[sequence] = 0
+            sequences[sequence] += 1
+    
+    # Sort by frequency and sequence length
+    sorted_sequences = sorted(
+        sequences.items(),
+        key=lambda x: (x[1], len(x[0])),
+        reverse=True
+    )
+    
+    return [
+        {
+            'sequence': list(seq),
+            'count': count,
+            'length': len(seq)
+        }
+        for seq, count in sorted_sequences[:max_sequences]
+        if count > 1  # Only return sequences that appear more than once
+    ]
 
 # Log Builder Routes
 @app.route('/logs/templates')
