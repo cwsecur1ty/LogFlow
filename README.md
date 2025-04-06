@@ -7,7 +7,9 @@ LogFlow is a flask & web-based toolkit for security professionals to process, an
 ## Features
 
 - **Liquid Template Processing**: Transform JSON logs into structured content using custom Liquid templates
-- **Log Analysis**: Examine JSON log structures, extract key fields and identify patterns using statistical analysis
+- **Log Analysis**: Examine JSON log structures, extract key fields
+   - Pattern recognition: Identify common patterns across log entries
+   - Statistical insights: Show frequency distribution of field values
 - **Log Builder**: Create and manage sample logs for testing and template development
 
 ## Getting Started
