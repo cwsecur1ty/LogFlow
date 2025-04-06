@@ -1,13 +1,13 @@
 # LogFlow
 
-<img src="images/logflow_logo.png" alt="LogFlow Logo" width="200" height="200"/>
+<img src="images/logflow_logo.png" alt="LogFlow Logo" width="450" height="200"/>
 
 LogFlow is a flask & web-based toolkit for security professionals to process, analyse and manage logs/json.
 
 ## Features
 
 - **Liquid Template Processing**: Transform JSON logs into structured content using custom Liquid templates
-- **Log Analysis**: Examine JSON log structures, extract key fields and identify patterns
+- **Log Analysis**: Examine JSON log structures, extract key fields and identify patterns using statistical analysis
 - **Log Builder**: Create and manage sample logs for testing and template development
 
 ## Getting Started
