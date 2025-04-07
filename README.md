@@ -40,7 +40,11 @@ LogFlow is a flask & web-based toolkit for security professionals to process, an
    ```bash
    python app.py
    ```
-5. Open browser to http://127.0.0.1:5000
+   OR
+   ```bash
+   python3 app.py
+   ```
+6. Open browser to http://127.0.0.1:5000
 
 ## Structure
 ```
