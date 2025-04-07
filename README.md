@@ -23,7 +23,7 @@ LogFlow is a flask & web-based toolkit for security professionals to process, an
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/logflow.git
+   git clone https://github.com/cwsecur1ty/logflow.git
    cd logflow
    ```
 2. Install Python dependencies:
@@ -38,7 +38,7 @@ LogFlow is a flask & web-based toolkit for security professionals to process, an
    ```
 4. Run the application:
    ```bash
-   py app.py
+   python app.py
    ```
 5. Open browser to http://127.0.0.1:5000
 
